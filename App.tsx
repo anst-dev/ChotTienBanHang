@@ -439,6 +439,48 @@ const App: React.FC = () => {
             {diff > 0 ? 'Thừa tiền mẹ ơi' : diff < 0 ? 'Thiếu tiền rồi' : 'Mẹ giỏi quá!'}
           </div>
         </div>
+
+        <SectionTitle title="Chi tiết hàng đã bán" />
+        <div className="space-y-4">
+          {report.map(item => (
+            <div key={item.id} className="bg-white rounded-2xl shadow-md p-5 border-2 border-gray-200">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h4 className="text-lg font-black text-black leading-tight uppercase tracking-tight">{item.name}</h4>
+                  <p className="text-xs font-bold text-gray-600 mt-1">{formatCurrency(item.price)} / {item.unit}</p>
+                </div>
+                <div className="text-right">
+                   <p className="text-[11px] font-black text-gray-500 uppercase mb-1">Thành tiền</p>
+                   <p className="text-xl font-black text-emerald-900">{formatCurrency(item.revenue)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 py-3 border-y-[3px] border-dashed border-gray-100">
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-gray-500 uppercase">Đầu ca</p>
+                  <p className="text-lg font-black text-black">{item.log.startQty}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-emerald-700 uppercase">Nhập</p>
+                  <p className="text-lg font-black text-emerald-800">{item.log.addedQty > 0 ? `+${item.log.addedQty}` : '0'}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-red-600 uppercase">Cuối ca</p>
+                  <p className="text-lg font-black text-red-700">{item.log.endQty}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-4 bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
+                <p className="text-[11px] font-black text-blue-950 uppercase tracking-wider">Số lượng bán được</p>
+                <div className="flex items-center space-x-2">
+                   <span className="text-3xl font-black text-blue-900">{item.sold}</span>
+                   <span className="text-xs font-black text-blue-700 uppercase">{item.unit}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <button onClick={startSession} className="w-full bg-red-800 text-white py-6 rounded-2xl text-xl font-black shadow-xl border-b-8 border-red-950 mt-6 active:translate-y-1 uppercase tracking-tight">Xóa ca cũ & Làm ca mới</button>
       </div>
     );
