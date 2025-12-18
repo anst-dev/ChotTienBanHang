@@ -1,0 +1,7 @@
+{
+  "name": "Mẹ Quản Lý Bán Lẻ",
+  "description": "Ứng dụng đơn giản giúp mẹ quản lý hàng hóa, doanh thu và đối soát tiền mặt/chuyển khoản cuối ngày.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
