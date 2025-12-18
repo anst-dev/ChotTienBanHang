@@ -22,7 +22,7 @@ import {
 
 // Thành phần tiêu đề phần
 const SectionTitle: React.FC<{ title: string }> = ({ title }) => (
-  <h2 className="text-xl font-black text-black mb-4 px-3 border-l-[8px] border-blue-800 leading-none">{title}</h2>
+  <h2 className="text-xl font-black text-black mb-4 px-3 border-l-[8px] border-blue-800 leading-none uppercase">{title}</h2>
 );
 
 const App: React.FC = () => {
@@ -46,8 +46,18 @@ const App: React.FC = () => {
     }
   });
 
+  // Quản lý lịch sử các ca làm việc
+  const [history, setHistory] = useState<DailySession[]>(() => {
+    const saved = localStorage.getItem('session_history');
+    try {
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   const [bankInfo] = useState<BankInfo>(DEFAULT_BANK_INFO);
-  const [activeTab, setActiveTab] = useState<'sales' | 'inventory' | 'report' | 'settings'>('sales');
+  const [activeTab, setActiveTab] = useState<'sales' | 'inventory' | 'report' | 'history' | 'settings'>('sales');
   const [saleAmount, setSaleAmount] = useState<string>('');
   const [showQR, setShowQR] = useState(false);
   
@@ -65,6 +75,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('current_session', JSON.stringify(session));
   }, [session]);
+
+  useEffect(() => {
+    localStorage.setItem('session_history', JSON.stringify(history));
+  }, [history]);
 
   // Bắt đầu ca mới
   const startSession = useCallback(() => {
@@ -95,6 +109,17 @@ const App: React.FC = () => {
     });
   }, [session]);
 
+  // Cập nhật trực tiếp số tiền (Mẹ yêu cầu)
+  const updateActualMoney = useCallback((method: PaymentMethod, value: number) => {
+    setSession(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [method === PaymentMethod.CASH ? 'actualCash' : 'actualTransfer']: value
+      };
+    });
+  }, []);
+
   // Ghi nhận bán hàng
   const addSale = useCallback((method: PaymentMethod) => {
     if (!session || !saleAmount) return;
@@ -115,7 +140,7 @@ const App: React.FC = () => {
       if (!prev) return null;
       return {
         ...prev,
-        transactions: [...prev.transactions, newTransaction],
+        transactions: [newTransaction, ...prev.transactions], // Mới nhất lên đầu
         actualCash: method === PaymentMethod.CASH ? prev.actualCash + amount : prev.actualCash,
         actualTransfer: method === PaymentMethod.TRANSFER ? prev.actualTransfer + amount : prev.actualTransfer
       };
@@ -125,7 +150,12 @@ const App: React.FC = () => {
       setShowQR(true);
     } else {
       setSaleAmount('');
-      alert('Đã ghi nhận TIỀN MẶT: ' + formatCurrency(amount));
+      // Thông báo nhẹ nhàng
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-700 text-white px-6 py-3 rounded-full font-black shadow-2xl z-[100] animate-bounce';
+      toast.innerText = 'Đã lưu: ' + formatCurrency(amount);
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
     }
   }, [session, saleAmount]);
 
@@ -134,7 +164,14 @@ const App: React.FC = () => {
     if (!session) return;
     const confirmed = window.confirm("Mẹ chắc chắn muốn CHỐT SỔ không?");
     if (confirmed) {
-      setSession(prev => prev ? { ...prev, isActive: false } : null);
+      const closedSession = { ...session, isActive: false };
+      setSession(closedSession);
+      // Lưu vào lịch sử ngay lập tức
+      setHistory(prev => {
+        const exists = prev.some(h => h.id === closedSession.id);
+        if (exists) return prev;
+        return [closedSession, ...prev].slice(0, 50);
+      });
       setActiveTab('report');
     }
   };
@@ -262,7 +299,7 @@ const App: React.FC = () => {
     return (
       <div className="space-y-4 pb-20">
         <div className="flex justify-between items-center mb-2">
-          <SectionTitle title="Kiểm kê" />
+          <SectionTitle title="Kiểm kê hàng" />
           <button onClick={() => setActiveTab('settings')} className="text-white font-black text-sm bg-blue-900 px-5 py-3 rounded-xl shadow-lg uppercase mb-2">Sửa Món</button>
         </div>
         {products.map(p => {
@@ -290,7 +327,7 @@ const App: React.FC = () => {
             </div>
           );
         })}
-        <button onClick={closeSession} className="w-full bg-black text-white py-6 rounded-2xl text-xl font-black shadow-xl border-b-8 border-gray-800 mt-4 active:translate-y-1">CHỐT SỔ</button>
+        <button onClick={closeSession} className="w-full bg-black text-white py-6 rounded-2xl text-xl font-black shadow-xl border-b-8 border-gray-800 mt-4 active:translate-y-1">CHỐT SỔ NGÀY</button>
       </div>
     );
   };
@@ -310,24 +347,50 @@ const App: React.FC = () => {
 
     return (
       <div className="space-y-4 pb-24">
-        <SectionTitle title="Báo cáo cuối ngày" />
+        <SectionTitle title="Báo cáo hôm nay" />
+        
+        {/* Phần sửa tiền trực tiếp */}
         <div className="grid grid-cols-1 gap-3">
-          <div className="bg-white p-5 rounded-xl shadow-md border-l-[12px] border-emerald-700">
-            <p className="text-black font-black uppercase text-xs mb-1">Tiền mặt</p>
-            <p className="text-2xl font-black text-emerald-900">{formatCurrency(session.actualCash)}</p>
+          <div className="bg-white p-5 rounded-2xl shadow-md border-l-[12px] border-emerald-700 border-2 border-emerald-100">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-emerald-900 font-black uppercase text-xs">Tổng Tiền mặt thu được</p>
+              <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded uppercase">Sửa được</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl font-black text-emerald-900">₫</span>
+              <input 
+                type="number" 
+                value={session.actualCash || ''} 
+                onChange={(e) => updateActualMoney(PaymentMethod.CASH, parseFloat(e.target.value) || 0)}
+                className="w-full bg-transparent text-3xl font-black text-emerald-800 outline-none border-b-2 border-emerald-200 focus:border-emerald-600 pb-1"
+              />
+            </div>
           </div>
-          <div className="bg-white p-5 rounded-xl shadow-md border-l-[12px] border-blue-800">
-            <p className="text-black font-black uppercase text-xs mb-1">Chuyển khoản</p>
-            <p className="text-2xl font-black text-blue-950">{formatCurrency(session.actualTransfer)}</p>
+
+          <div className="bg-white p-5 rounded-2xl shadow-md border-l-[12px] border-blue-800 border-2 border-blue-100">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-blue-900 font-black uppercase text-xs">Tổng Chuyển khoản nhận được</p>
+              <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded uppercase">Sửa được</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl font-black text-blue-900">₫</span>
+              <input 
+                type="number" 
+                value={session.actualTransfer || ''} 
+                onChange={(e) => updateActualMoney(PaymentMethod.TRANSFER, parseFloat(e.target.value) || 0)}
+                className="w-full bg-transparent text-3xl font-black text-blue-900 outline-none border-b-2 border-blue-200 focus:border-blue-600 pb-1"
+              />
+            </div>
           </div>
-          <div className="bg-white p-5 rounded-xl shadow-md border-l-[12px] border-black">
-            <p className="text-black font-black uppercase text-xs mb-1">Doanh thu chuẩn</p>
-            <p className="text-2xl font-black text-black">{formatCurrency(totalRev)}</p>
+
+          <div className="bg-black p-5 rounded-2xl shadow-md border-l-[12px] border-gray-500">
+            <p className="text-gray-400 font-black uppercase text-xs mb-1">Doanh thu chuẩn (Lý thuyết)</p>
+            <p className="text-2xl font-black text-white">{formatCurrency(totalRev)}</p>
           </div>
         </div>
         
         <div className={`p-6 rounded-[30px] shadow-lg border-[3px] text-center ${diff === 0 ? 'bg-emerald-50 border-emerald-600' : diff > 0 ? 'bg-blue-50 border-blue-500' : 'bg-red-50 border-red-600'}`}>
-          <p className="text-black font-black uppercase text-xs mb-1">Chênh lệch</p>
+          <p className="text-black font-black uppercase text-xs mb-1">Chênh lệch Thừa/Thiếu</p>
           <p className={`text-3xl font-black mb-2 ${diff === 0 ? 'text-emerald-900' : diff > 0 ? 'text-blue-950' : 'text-red-950'}`}>
             {diff === 0 ? 'KHỚP SỔ!' : formatCurrency(diff)}
           </p>
@@ -336,7 +399,7 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <SectionTitle title="Chi tiết đã bán" />
+        <SectionTitle title="Chi tiết hàng đã bán" />
         <div className="space-y-4">
           {report.map(item => (
             <div key={item.id} className="bg-white rounded-2xl shadow-md p-5 border-2 border-gray-200">
@@ -377,10 +440,98 @@ const App: React.FC = () => {
           ))}
         </div>
 
-        <button onClick={startSession} className="w-full bg-red-800 text-white py-6 rounded-2xl text-xl font-black shadow-xl border-b-8 border-red-950 mt-6 active:translate-y-1">LÀM CA MỚI</button>
+        <button onClick={startSession} className="w-full bg-red-800 text-white py-6 rounded-2xl text-xl font-black shadow-xl border-b-8 border-red-950 mt-6 active:translate-y-1">LÀM CA MỚI (LƯU LỊCH SỬ)</button>
       </div>
     );
   };
+
+  const renderHistory = () => (
+    <div className="space-y-4 pb-24">
+      <SectionTitle title="Sổ tiền đã thu" />
+      
+      {/* Thống kê ca hiện tại */}
+      {session && (
+        <div className="bg-blue-50 p-5 rounded-3xl border-2 border-blue-200 mb-6 shadow-md">
+          <div className="flex justify-between items-center mb-4">
+             <h3 className="font-black text-blue-900 uppercase text-sm tracking-widest">Ca đang bán</h3>
+             <span className="bg-blue-800 text-white px-2 py-1 rounded-lg text-[10px] font-black">HÔM NAY</span>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white p-3 rounded-xl border border-blue-100">
+               <p className="text-[10px] font-black text-gray-500 uppercase">Tiền mặt</p>
+               <p className="text-lg font-black text-emerald-800">{formatCurrency(session.actualCash)}</p>
+            </div>
+            <div className="bg-white p-3 rounded-xl border border-blue-100 text-right">
+               <p className="text-[10px] font-black text-gray-500 uppercase">Chuyển khoản</p>
+               <p className="text-lg font-black text-blue-900">{formatCurrency(session.actualTransfer)}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-2">
+             <p className="text-[11px] font-black text-blue-950 uppercase mb-2">Đơn hàng vừa bán:</p>
+             {session.transactions.length === 0 ? (
+               <p className="text-xs text-blue-600 font-bold italic">Mẹ chưa bán đơn nào...</p>
+             ) : (
+               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                 {session.transactions.map((tx, idx) => (
+                   <div key={tx.id} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-blue-100">
+                      <div className="flex items-center space-x-3">
+                         <span className="text-xl">{tx.method === PaymentMethod.CASH ? '💵' : '💳'}</span>
+                         <div>
+                            <p className="text-xs font-black text-black leading-none">{formatCurrency(tx.amount)}</p>
+                            <p className="text-[9px] text-gray-500 font-bold mt-1">{new Date(tx.timestamp).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+                         </div>
+                      </div>
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${tx.method === PaymentMethod.CASH ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>
+                        {tx.method === PaymentMethod.CASH ? 'Tiền mặt' : 'CK'}
+                      </span>
+                   </div>
+                 ))}
+               </div>
+             )}
+          </div>
+        </div>
+      )}
+
+      <SectionTitle title="Lịch sử cũ" />
+      {history.length === 0 ? (
+        <div className="bg-white p-10 rounded-3xl text-center border-2 border-dashed border-gray-300">
+          <p className="text-4xl mb-4">📖</p>
+          <p className="text-gray-500 font-bold">Chưa có lịch sử cũ.<br/>Mẹ hãy chốt sổ để lưu lại nhé!</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {history.map(h => {
+            const totalMoney = h.actualCash + h.actualTransfer;
+            return (
+              <div key={h.id} className="bg-white rounded-2xl shadow-md p-5 border-2 border-gray-100">
+                <div className="flex justify-between items-center mb-3">
+                   <span className="bg-black text-white px-3 py-1 rounded-lg font-black text-xs uppercase tracking-widest">{h.date.split('-').reverse().join('/')}</span>
+                   <span className="font-black text-xs text-gray-500 uppercase">{h.transactions.length} đơn bán</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase">Tổng Thu</p>
+                    <p className="text-lg font-black text-blue-950">{formatCurrency(totalMoney)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-gray-400 uppercase">Tiền mặt</p>
+                    <p className="text-base font-black text-emerald-800">{formatCurrency(h.actualCash)}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <button 
+        onClick={() => { if(window.confirm("Mẹ muốn xóa sạch lịch sử không?")) setHistory([]); }}
+        className="w-full bg-gray-100 text-gray-400 py-3 rounded-xl font-black text-xs mt-6 uppercase"
+      >
+        Xóa lịch sử cũ
+      </button>
+    </div>
+  );
 
   const renderSettings = () => (
     <div className="space-y-4 pb-24">
@@ -495,7 +646,7 @@ const App: React.FC = () => {
       </header>
 
       <main className="p-4">
-        {!session ? (
+        {!session && activeTab !== 'history' && activeTab !== 'settings' ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4">
             <div className="w-32 h-32 bg-blue-900 rounded-[48px] flex items-center justify-center mb-10 shadow-2xl border-[8px] border-blue-700 transform rotate-3">
               <span className="text-6xl">🏪</span>
@@ -512,26 +663,30 @@ const App: React.FC = () => {
             {activeTab === 'sales' && renderSales()}
             {activeTab === 'inventory' && renderInventory()}
             {activeTab === 'report' && renderReport()}
+            {activeTab === 'history' && renderHistory()}
             {activeTab === 'settings' && renderSettings()}
           </div>
         )}
       </main>
 
-      {session && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-black border-t-[4px] border-blue-800 px-2 py-3 flex justify-around items-center z-30 max-w-md mx-auto rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.3)]">
-          {[
-            { id: 'sales', label: 'BÁN', icon: '💰' },
-            { id: 'inventory', label: 'KHO', icon: '📦' },
-            { id: 'report', label: 'SỔ', icon: '📊' },
-            { id: 'settings', label: 'MÓN', icon: '⚙️' },
-          ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex flex-col items-center px-5 py-2 rounded-2xl transition-all ${activeTab === tab.id ? 'bg-blue-800 text-white scale-110 shadow-lg -translate-y-2' : 'text-gray-500 opacity-60'}`}>
-              <span className="text-2xl mb-1">{tab.icon}</span>
-              <span className="text-[10px] font-black uppercase tracking-tight">{tab.label}</span>
-            </button>
-          ))}
-        </nav>
-      )}
+      <nav className="fixed bottom-0 left-0 right-0 bg-black border-t-[4px] border-blue-800 px-2 py-3 flex justify-around items-center z-30 max-w-md mx-auto rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.3)]">
+        {[
+          { id: 'sales', label: 'BÁN', icon: '💰' },
+          { id: 'inventory', label: 'KHO', icon: '📦' },
+          { id: 'report', label: 'SỔ', icon: '📊' },
+          { id: 'history', label: 'TIỀN', icon: '📖' },
+          { id: 'settings', label: 'MÓN', icon: '⚙️' },
+        ].map(tab => (
+          <button 
+            key={tab.id} 
+            onClick={() => setActiveTab(tab.id as any)} 
+            className={`flex flex-col items-center px-4 py-2 rounded-2xl transition-all ${activeTab === tab.id ? 'bg-blue-800 text-white scale-110 shadow-lg -translate-y-2' : 'text-gray-500 opacity-60'}`}
+          >
+            <span className="text-2xl mb-1">{tab.icon}</span>
+            <span className="text-[9px] font-black uppercase tracking-tight">{tab.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 };
