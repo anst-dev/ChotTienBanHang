@@ -16,6 +16,7 @@ export interface Transaction {
   timestamp: number;
   amount: number;
   method: PaymentMethod;
+  note?: string; // Ghi chú gợi nhớ
   items?: { productId: string; quantity: number }[];
 }
 
