@@ -303,7 +303,7 @@ const App: React.FC = () => {
       const sold = log.startQty + log.addedQty - log.endQty;
       const revenue = Math.max(0, sold) * p.price;
       totalRev += revenue;
-      return { ...p, sold: Math.max(0, sold), revenue };
+      return { ...p, sold: Math.max(0, sold), revenue, log };
     });
     const recordedTotal = session.actualCash + session.actualTransfer;
     const diff = recordedTotal - totalRev;
@@ -325,6 +325,7 @@ const App: React.FC = () => {
             <p className="text-xl font-black text-black">{formatCurrency(totalRev)}</p>
           </div>
         </div>
+        
         <div className={`p-5 rounded-2xl shadow border-2 text-center ${diff === 0 ? 'bg-emerald-50 border-emerald-600' : diff > 0 ? 'bg-blue-50 border-blue-500' : 'bg-red-50 border-red-600'}`}>
           <p className="text-black font-black uppercase text-[10px] mb-1">Chênh lệch</p>
           <p className={`text-2xl font-black mb-2 ${diff === 0 ? 'text-emerald-800' : diff > 0 ? 'text-blue-900' : 'text-red-900'}`}>
@@ -334,6 +335,48 @@ const App: React.FC = () => {
             {diff > 0 ? 'Thừa tiền mẹ ơi' : diff < 0 ? 'Thiếu tiền rồi' : 'Xuất sắc!'}
           </div>
         </div>
+
+        <SectionTitle title="Chi tiết đã bán" />
+        <div className="space-y-3">
+          {report.map(item => (
+            <div key={item.id} className="bg-white rounded-xl shadow p-4 border border-gray-100">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h4 className="text-base font-black text-black leading-tight">{item.name}</h4>
+                  <p className="text-[10px] font-bold text-gray-500 mt-1">{formatCurrency(item.price)} / {item.unit}</p>
+                </div>
+                <div className="text-right">
+                   <p className="text-[10px] font-black text-gray-400 uppercase">Thành tiền</p>
+                   <p className="text-lg font-black text-emerald-800">{formatCurrency(item.revenue)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 py-2 border-y border-dashed border-gray-200">
+                <div className="text-center">
+                  <p className="text-[8px] font-black text-gray-400 uppercase">Đầu ca</p>
+                  <p className="text-sm font-bold text-black">{item.log.startQty} {item.unit}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[8px] font-black text-emerald-600 uppercase">Nhập thêm</p>
+                  <p className="text-sm font-bold text-emerald-700">{item.log.addedQty > 0 ? `+${item.log.addedQty}` : '0'} {item.unit}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[8px] font-black text-red-500 uppercase">Cuối ca</p>
+                  <p className="text-sm font-bold text-red-600">{item.log.endQty} {item.unit}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-3 bg-blue-50 p-2 rounded-lg border border-blue-100">
+                <p className="text-[10px] font-black text-blue-900 uppercase">Số lượng đã bán</p>
+                <div className="flex items-center space-x-2">
+                   <span className="text-xl font-black text-blue-900">{item.sold}</span>
+                   <span className="text-[10px] font-bold text-blue-700 uppercase">{item.unit}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <button onClick={startSession} className="w-full bg-red-800 text-white py-4 rounded-xl text-lg font-black shadow active:translate-y-1">LÀM CA MỚI</button>
       </div>
     );
@@ -396,7 +439,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Modal XÁC NHẬN XÓA (Quan trọng nhất) */}
+      {/* Modal XÁC NHẬN XÓA */}
       {productToDelete && (
         <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-[60] p-6">
           <div className="bg-white rounded-[32px] p-8 w-full max-w-sm text-center space-y-6 shadow-2xl">
