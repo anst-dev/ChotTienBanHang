@@ -8,9 +8,9 @@ export const INITIAL_PRODUCTS: Product[] = [
 ];
 
 export const DEFAULT_BANK_INFO: BankInfo = {
-  bankId: 'vietinbank', // Simplified bank ID for VietQR
-  accountNo: '123456789',
-  accountName: 'NGUYEN THI ME'
+  bankId: 'MB', // Simplified bank ID for VietQR
+  accountNo: '0982094668',
+  accountName: 'NGUYEN DANG HIEU'
 };
 
 export const COLORS = {
