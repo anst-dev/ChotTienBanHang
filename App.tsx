@@ -55,7 +55,11 @@ const App: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+
   const [newProduct, setNewProduct] = useState<Partial<Product>>({ name: '', unit: '', price: 0 });
+  
+  // State hướng dẫn
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => { localStorage.setItem('products', JSON.stringify(products)); }, [products]);
   useEffect(() => { localStorage.setItem('current_session', JSON.stringify(session)); }, [session]);
@@ -492,7 +496,10 @@ const App: React.FC = () => {
     <div className="space-y-4 pb-24">
       <div className="flex justify-between items-center mb-2">
         <SectionTitle title="Danh mục hàng" />
-        <button onClick={() => setShowAddProductModal(true)} className="bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-sm shadow-lg border-b-4 border-emerald-900">+ THÊM MÓN</button>
+        <div className="space-x-2">
+          <button onClick={() => setShowGuide(true)} className="bg-blue-100 text-blue-900 px-3 py-3 rounded-xl font-black text-sm border-b-4 border-blue-200">HƯỚNG DẪN</button>
+          <button onClick={() => setShowAddProductModal(true)} className="bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-sm shadow-lg border-b-4 border-emerald-900">+ THÊM MÓN</button>
+        </div>
       </div>
       <div className="space-y-3">
         {products.map(p => (
@@ -519,7 +526,10 @@ const App: React.FC = () => {
           <div className="flex flex-col items-center justify-center py-24 text-center px-4">
             <div className="w-32 h-32 bg-blue-900 rounded-[48px] flex items-center justify-center mb-10 shadow-2xl border-[8px] border-blue-700 transform rotate-3"><span className="text-6xl">🏪</span></div>
             <h2 className="text-4xl font-black text-black mb-4">Chào mẹ yêu!</h2>
-            <button onClick={startSession} className="w-full bg-emerald-600 text-white py-6 rounded-3xl text-2xl font-black border-b-8 border-emerald-900 shadow-xl active:translate-y-2">BẮT ĐẦU BÁN HÀNG</button>
+            <div className="w-full space-y-4">
+              <button onClick={startSession} className="w-full bg-emerald-600 text-white py-6 rounded-3xl text-2xl font-black border-b-8 border-emerald-900 shadow-xl active:translate-y-2">BẮT ĐẦU BÁN HÀNG</button>
+              <button onClick={() => setShowGuide(true)} className="w-full bg-white text-blue-900 py-4 rounded-3xl text-lg font-black border-b-4 border-gray-200 shadow-lg active:translate-y-1">HƯỚNG DẪN SỬ DỤNG</button>
+            </div>
           </div>
         ) : (
           <div className="animate-in fade-in duration-300">
@@ -616,6 +626,43 @@ const App: React.FC = () => {
                 setProducts(products.filter(p => p.id !== productToDelete.id));
                 setProductToDelete(null);
               }} className="py-4 bg-red-700 text-white font-black rounded-xl uppercase">Xóa Luôn</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Hướng dẫn sử dụng */}
+      {showGuide && (
+        <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-[40px] w-full max-w-sm h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-6 border-b-4 border-blue-800 bg-blue-50">
+              <h3 className="text-2xl font-black text-blue-900 text-center uppercase">Hướng dẫn sử dụng</h3>
+            </div>
+              <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-100">
+                <div className="flex items-center space-x-3 mb-2">
+                  <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-black">1</span>
+                  <h4 className="font-black text-emerald-900 text-lg">NHẬN CA</h4>
+                </div>
+                <p className="text-gray-700 font-medium">Bấm bút <span className="font-black text-white bg-emerald-600 px-2 py-0.5 rounded">MỞ CA</span>. Vào mục <span className="font-black text-black">📦 KHO</span>, điếm xem trong tủ còn bao nhiêu hàng thì nhập vào cột <span className="font-black text-black">ĐẦU CA</span>.</p>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-2xl border-2 border-blue-100">
+                <div className="flex items-center space-x-3 mb-2">
+                  <span className="bg-blue-800 text-white w-8 h-8 rounded-full flex items-center justify-center font-black">2</span>
+                  <h4 className="font-black text-blue-900 text-lg">BÁN HÀNG</h4>
+                </div>
+                <p className="text-gray-700 font-medium">Khách mua bao nhiêu tiền thì bấm số vào máy. Chọn <span className="font-black text-emerald-700">TIỀN MẶT</span> hoặc <span className="font-black text-blue-800">CHUYỂN KHOẢN</span>.</p>
+              </div>
+
+              <div className="bg-red-50 p-4 rounded-2xl border-2 border-red-100">
+                <div className="flex items-center space-x-3 mb-2">
+                  <span className="bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black">3</span>
+                  <h4 className="font-black text-red-900 text-lg">CUỐI CA KIỂM TRA</h4>
+                </div>
+                <p className="text-gray-700 font-medium">Đếm lại hàng còn lại trong tủ rồi nhập vào cột <span className="font-black text-red-700">CUỐI CA</span> để xem hôm nay bán được bao nhiêu.</p>
+              </div>
+            <div className="p-4 border-t-4 border-gray-100 bg-gray-50">
+              <button onClick={() => setShowGuide(false)} className="w-full py-4 bg-gray-800 text-white font-black text-xl rounded-2xl shadow-lg border-b-8 border-black active:translate-y-1">ĐÓNG HƯỚNG DẪN</button>
             </div>
           </div>
         </div>
