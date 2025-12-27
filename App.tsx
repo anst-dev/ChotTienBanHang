@@ -178,42 +178,40 @@ const App: React.FC = () => {
   };
 
   const handleKeypad = (val: string) => {
-    if (val === 'C') setSaleAmount('');
+    if (val === 'C' || val === 'NHẬP LẠI') setSaleAmount('');
     else if (val === '000') setSaleAmount(prev => (prev === '' || prev === '0' ? '' : prev + '000'));
     else setSaleAmount(prev => (prev === '0' ? val : prev + val));
   };
 
   const renderSales = () => (
-    <div className="flex flex-col space-y-4">
-      <SectionTitle title="Mẹ nhập số tiền" />
-      <div className="bg-white p-4 rounded-xl shadow-md border-[4px] border-blue-800 mb-2">
+    <div className="flex flex-col space-y-2">
+      <div className="bg-white p-3 rounded-xl shadow-md border-[4px] border-blue-800 mb-1">
         <div className="flex items-center justify-between">
-           <span className="text-black text-2xl font-black">₫</span>
-           <div className="text-4xl font-black text-right text-blue-900 break-all tracking-tight">
+           <span className="text-black text-xl font-black">₫</span>
+           <div className="text-3xl font-black text-right text-blue-900 break-all tracking-tight">
              {saleAmount ? formatNumber(parseFloat(saleAmount)) : '0'}
            </div>
         </div>
       </div>
 
       <div className="px-1">
-        <label className="text-[11px] font-black text-gray-500 uppercase ml-1 mb-1 block">Ghi chú (để mẹ nhớ)</label>
         <input 
           type="text"
-          placeholder="VD: Chị Lan mua, khách nợ..."
-          className="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl text-lg font-bold text-black focus:border-blue-500 outline-none"
+          placeholder="Ghi chú (VD: Chị Lan mua...)"
+          className="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-base font-bold text-black focus:border-blue-500 outline-none"
           value={saleNote}
           onChange={(e) => setSaleNote(e.target.value)}
         />
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-2">
-        {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '000'].map(key => (
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'NHẬP LẠI', '0', '000'].map(key => (
           <button
             key={key}
             onClick={() => handleKeypad(key)}
-            className={`py-5 text-2xl font-black rounded-xl shadow-sm border-2 ${
-              key === 'C' ? 'bg-red-700 text-white border-red-900' : 
-              key === '000' ? 'bg-blue-100 text-black border-blue-400' : 'bg-white text-black border-gray-300'
+            className={`py-5 font-black rounded-xl shadow-sm border-2 ${
+              key === 'NHẬP LẠI' ? 'bg-red-700 text-white border-red-900 text-sm' : 
+              key === '000' ? 'bg-blue-100 text-black border-blue-400 text-2xl' : 'bg-white text-black border-gray-300 text-2xl'
             }`}
           >
             {key}
@@ -221,9 +219,9 @@ const App: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-        <button onClick={() => addSale(PaymentMethod.CASH)} disabled={!saleAmount} className="bg-emerald-700 text-white py-6 rounded-2xl text-xl font-black shadow-lg border-b-8 border-emerald-950 active:translate-y-1 disabled:opacity-50">TRẢ TIỀN MẶT</button>
-        <button onClick={() => addSale(PaymentMethod.TRANSFER)} disabled={!saleAmount} className="bg-blue-800 text-white py-6 rounded-2xl text-xl font-black shadow-lg border-b-8 border-blue-950 active:translate-y-1 disabled:opacity-50">CHUYỂN KHOẢN</button>
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={() => addSale(PaymentMethod.CASH)} disabled={!saleAmount} className="bg-emerald-700 text-white py-5 rounded-2xl text-lg font-black shadow-lg border-b-4 border-emerald-950 active:translate-y-1 disabled:opacity-50 leading-tight">TIỀN MẶT</button>
+        <button onClick={() => addSale(PaymentMethod.TRANSFER)} disabled={!saleAmount} className="bg-blue-800 text-white py-5 rounded-2xl text-lg font-black shadow-lg border-b-4 border-blue-950 active:translate-y-1 disabled:opacity-50 leading-tight">CHUYỂN KHOẢN</button>
       </div>
 
       {showQR && (
@@ -234,7 +232,10 @@ const App: React.FC = () => {
               <img src={getVietQRUrl(bankInfo, parseFloat(saleAmount), saleNote)} alt="VietQR" className="w-full h-auto" />
             </div>
             <p className="text-3xl font-black text-blue-950 mb-6">{formatCurrency(parseFloat(saleAmount))}</p>
-            <button onClick={() => { setShowQR(false); setSaleAmount(''); setSaleNote(''); }} className="w-full py-5 bg-emerald-700 text-white font-black text-xl rounded-2xl border-b-4 border-emerald-900">MẸ ĐÃ NHẬN TIỀN</button>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => setShowQR(false)} className="py-5 bg-gray-200 text-black font-black text-lg rounded-2xl border-b-4 border-gray-400">ĐÓNG</button>
+              <button onClick={() => { setShowQR(false); setSaleAmount(''); setSaleNote(''); }} className="py-5 bg-emerald-700 text-white font-black text-lg rounded-2xl border-b-4 border-emerald-900 leading-tight tracking-tighter">MẸ ĐÃ NHẬN TIỀN</button>
+            </div>
           </div>
         </div>
       )}
@@ -309,7 +310,8 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Số tiền (₫)</label>
-                <input type="number" className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-2xl font-black text-blue-900" value={editingTransaction.amount} onChange={e => setEditingTransaction({...editingTransaction, amount: parseFloat(e.target.value) || 0})} />
+                <input type="number" className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-2xl font-black text-blue-900" value={editingTransaction.amount || ''} onChange={e => setEditingTransaction({...editingTransaction, amount: parseFloat(e.target.value) || 0})} />
+                <p className="text-sm font-black text-emerald-700 mt-1 ml-1">{formatCurrency(editingTransaction.amount)}</p>
               </div>
               <div>
                 <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Giờ bán</label>
@@ -512,21 +514,6 @@ const App: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-white pb-24 border-x-4 border-gray-200 shadow-xl font-sans relative">
-      <header className="bg-black p-5 shadow-lg sticky top-0 z-20 flex justify-between items-center border-b-[6px] border-blue-800">
-        <div>
-          <h1 className="text-xl font-black text-white leading-none tracking-tight">MẸ QUẢN LÝ</h1>
-          <p className="text-[11px] font-black text-blue-500 mt-1 uppercase tracking-widest">{getCurrentDateKey().split('-').reverse().join('/')}</p>
-        </div>
-        {!session ? (
-          <button onClick={startSession} className="bg-emerald-500 text-white px-5 py-3 rounded-xl font-black text-base border-b-4 border-emerald-800 shadow-lg">MỞ CA</button>
-        ) : session.isActive && (
-          <div className="bg-emerald-700 px-3 py-2 rounded-xl border-2 border-white flex items-center space-x-2">
-            <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
-            <span className="font-black text-white text-[10px] uppercase tracking-wider">ĐANG BÁN</span>
-          </div>
-        )}
-      </header>
-
       <main className="p-4">
         {!session && activeTab !== 'history' && activeTab !== 'settings' ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4">
@@ -560,7 +547,7 @@ const App: React.FC = () => {
         ))}
       </nav>
 
-      {/* Modal Quản lý món hàng giữ nguyên từ file cũ */}
+      {/* Modal Thêm món mới */}
       {showAddProductModal && (
         <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 p-6">
           <div className="bg-white rounded-[40px] p-8 w-full max-w-sm space-y-6 shadow-2xl">
@@ -568,15 +555,67 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <input placeholder="Tên món (VD: Bia)" className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-lg font-black" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} />
               <input placeholder="Đơn vị (VD: Két)" className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-lg font-black" value={newProduct.unit} onChange={e => setNewProduct({...newProduct, unit: e.target.value})} />
-              <input type="number" placeholder="Giá tiền" className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-lg font-black" value={newProduct.price || ''} onChange={e => setNewProduct({...newProduct, price: parseFloat(e.target.value) || 0})} />
+              <div className="space-y-1">
+                <input type="number" placeholder="Giá tiền" className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-lg font-black" value={newProduct.price || ''} onChange={e => setNewProduct({...newProduct, price: parseFloat(e.target.value) || 0})} />
+                {newProduct.price ? <p className="text-sm font-black text-blue-800 ml-1">{formatCurrency(newProduct.price)}</p> : null}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <button onClick={() => setShowAddProductModal(false)} className="py-4 bg-gray-200 font-black rounded-xl">HỦY</button>
               <button onClick={() => {
                 const p: Product = { id: Date.now().toString(), name: newProduct.name || '', unit: newProduct.unit || '', price: newProduct.price || 0 };
                 setProducts([...products, p]);
+                setNewProduct({ name: '', unit: '', price: 0 });
                 setShowAddProductModal(false);
               }} className="py-4 bg-blue-800 text-white font-black rounded-xl uppercase">Thêm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Sửa món hàng */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-[40px] p-8 w-full max-w-sm space-y-6 shadow-2xl">
+            <h3 className="text-2xl font-black text-black border-b-4 border-blue-800 pb-2">Sửa món hàng</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Tên món</label>
+                <input className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-lg font-black" value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Đơn vị</label>
+                <input className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-lg font-black" value={editingProduct.unit} onChange={e => setEditingProduct({...editingProduct, unit: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Giá tiền (₫)</label>
+                <input type="number" className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-lg font-black" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: parseFloat(e.target.value) || 0})} />
+                <p className="text-sm font-black text-blue-800 mt-1 ml-1">{formatCurrency(editingProduct.price)}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => setEditingProduct(null)} className="py-4 bg-gray-200 font-black rounded-xl">HỦY</button>
+              <button onClick={() => {
+                setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
+                setEditingProduct(null);
+              }} className="py-4 bg-blue-800 text-white font-black rounded-xl uppercase">LƯU</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Xóa món hàng */}
+      {productToDelete && (
+        <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-[40px] p-8 w-full max-w-sm space-y-6 shadow-2xl">
+            <h3 className="text-2xl font-black text-black border-b-4 border-red-800 pb-2 uppercase">Xóa món hàng?</h3>
+            <p className="text-lg font-bold text-center">Mẹ chắc chắn muốn xóa <span className="text-red-700 font-black">"{productToDelete.name}"</span> không?</p>
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => setProductToDelete(null)} className="py-4 bg-gray-200 font-black rounded-xl uppercase">Không</button>
+              <button onClick={() => {
+                setProducts(products.filter(p => p.id !== productToDelete.id));
+                setProductToDelete(null);
+              }} className="py-4 bg-red-700 text-white font-black rounded-xl uppercase">Xóa Luôn</button>
             </div>
           </div>
         </div>
