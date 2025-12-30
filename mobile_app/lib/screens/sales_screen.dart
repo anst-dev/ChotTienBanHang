@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../models/types.dart';
@@ -15,6 +16,9 @@ class SalesScreen extends StatefulWidget {
 class _SalesScreenState extends State<SalesScreen> {
   String _amount = '';
   final TextEditingController _noteController = TextEditingController();
+  
+  // Giới hạn tối đa 12 ký tự (đến hàng tỷ đồng)
+  static const int _maxDigits = 12;
 
   @override
   void dispose() {
@@ -23,18 +27,31 @@ class _SalesScreenState extends State<SalesScreen> {
   }
 
   void _handleKeypad(String value) {
+    // Haptic feedback khi nhấn nút
+    HapticFeedback.lightImpact();
+    
     setState(() {
-      if (value == 'C' || value == 'NHẬP LẠI') {
+      if (value == 'NHẬP LẠI') {
+        // Xóa hết
         _amount = '';
+      } else if (value == 'XÓA') {
+        // Xóa từng ký tự cuối
+        if (_amount.isNotEmpty) {
+          _amount = _amount.substring(0, _amount.length - 1);
+        }
       } else if (value == '000') {
-        if (_amount.isNotEmpty && _amount != '0') {
+        // Thêm 000 (nếu không vượt giới hạn)
+        if (_amount.isNotEmpty && _amount != '0' && _amount.length + 3 <= _maxDigits) {
           _amount += '000';
         }
       } else {
-        if (_amount == '0') {
-          _amount = value;
-        } else {
-          _amount += value;
+        // Thêm số (nếu không vượt giới hạn)
+        if (_amount.length < _maxDigits) {
+          if (_amount == '0') {
+            _amount = value;
+          } else {
+            _amount += value;
+          }
         }
       }
     });
@@ -158,24 +175,28 @@ class _SalesScreenState extends State<SalesScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Keypad
+              // Keypad - 4 cột với nút XÓA tiện lợi
               Expanded(
                 child: GridView.count(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 1.2,
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                  childAspectRatio: 1.1,
                   children: [
-                    '1', '2', '3',
-                    '4', '5', '6',
-                    '7', '8', '9',
-                    'NHẬP LẠI', '0', '000',
+                    '1', '2', '3', 'XÓA',
+                    '4', '5', '6', '000',
+                    '7', '8', '9', 'NHẬP LẠI',
+                    '', '0', '', '',
                   ].map((key) {
+                    if (key.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
                     return KeypadButton(
                       label: key,
                       onPressed: () => _handleKeypad(key),
-                      isDelete: key == 'NHẬP LẠI',
+                      isDelete: key == 'XÓA',
                       isSpecial: key == '000',
+                      isClear: key == 'NHẬP LẠI',
                     );
                   }).toList(),
                 ),

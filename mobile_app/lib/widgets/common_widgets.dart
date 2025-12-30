@@ -39,6 +39,7 @@ class KeypadButton extends StatelessWidget {
   final VoidCallback onPressed;
   final bool isSpecial;
   final bool isDelete;
+  final bool isClear;
 
   const KeypadButton({
     super.key,
@@ -46,31 +47,51 @@ class KeypadButton extends StatelessWidget {
     required this.onPressed,
     this.isSpecial = false,
     this.isDelete = false,
+    this.isClear = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Màu nền
+    Color backgroundColor;
+    Color borderColor;
+    Color textColor;
+    
+    if (isDelete) {
+      // Nút XÓA - màu cam
+      backgroundColor = Colors.orange.shade600;
+      borderColor = Colors.orange.shade800;
+      textColor = Colors.white;
+    } else if (isClear) {
+      // Nút NHẬP LẠI - màu đỏ
+      backgroundColor = Colors.red.shade700;
+      borderColor = Colors.red.shade900;
+      textColor = Colors.white;
+    } else if (isSpecial) {
+      // Nút 000 - màu xanh nhạt
+      backgroundColor = Colors.blue.shade100;
+      borderColor = Colors.blue.shade400;
+      textColor = AppColors.textPrimary;
+    } else {
+      // Nút số thường
+      backgroundColor = Colors.white;
+      borderColor = Colors.grey.shade300;
+      textColor = AppColors.textPrimary;
+    }
+    
     return Material(
-      color: isDelete
-          ? Colors.red.shade700
-          : isSpecial
-              ? Colors.blue.shade100
-              : Colors.white,
+      color: backgroundColor,
       borderRadius: BorderRadius.circular(12),
       elevation: 1,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDelete
-                  ? Colors.red.shade900
-                  : isSpecial
-                      ? Colors.blue.shade400
-                      : Colors.grey.shade300,
+              color: borderColor,
               width: 2,
             ),
           ),
@@ -78,13 +99,9 @@ class KeypadButton extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: isDelete ? 14 : 24,
+                fontSize: (isDelete || isClear) ? 12 : 22,
                 fontWeight: FontWeight.w900,
-                color: isDelete
-                    ? Colors.white
-                    : isSpecial
-                        ? AppColors.textPrimary
-                        : AppColors.textPrimary,
+                color: textColor,
               ),
             ),
           ),

@@ -63,34 +63,36 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 SettingsScreen(),
               ],
             ),
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                border: const Border(top: BorderSide(color: AppColors.primary, width: 4)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 30,
-                    offset: const Offset(0, -10),
-                  ),
-                ],
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicatorColor: Colors.transparent,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.grey.shade500,
-                tabs: [
-                  _NavTab(icon: '💰', label: 'BÁN', isSelected: _tabController.index == 0),
-                  _NavTab(icon: '📖', label: 'TIỀN', isSelected: _tabController.index == 1),
-                  _NavTab(icon: '📦', label: 'KHO', isSelected: _tabController.index == 2),
-                  _NavTab(icon: '📊', label: 'SỔ', isSelected: _tabController.index == 3),
-                  _NavTab(icon: '⚙️', label: 'MÓN', isSelected: _tabController.index == 4),
-                ],
-                onTap: (index) {
-                  setState(() {});
-                },
+            bottomNavigationBar: SafeArea(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  border: const Border(top: BorderSide(color: AppColors.primary, width: 4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 30,
+                      offset: const Offset(0, -10),
+                    ),
+                  ],
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Colors.transparent,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.grey.shade500,
+                  tabs: [
+                    _NavTab(icon: '💰', label: 'BÁN', isSelected: _tabController.index == 0),
+                    _NavTab(icon: '📖', label: 'TIỀN', isSelected: _tabController.index == 1),
+                    _NavTab(icon: '📦', label: 'KHO', isSelected: _tabController.index == 2),
+                    _NavTab(icon: '📊', label: 'SỔ', isSelected: _tabController.index == 3),
+                    _NavTab(icon: '⚙️', label: 'MÓN', isSelected: _tabController.index == 4),
+                  ],
+                  onTap: (index) {
+                    setState(() {});
+                  },
+                ),
               ),
             ),
           ),
