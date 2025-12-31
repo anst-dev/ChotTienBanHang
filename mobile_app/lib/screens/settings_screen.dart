@@ -320,7 +320,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
             if (_priceController.text.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                formatCurrency(double.tryParse(_priceController.text) ?? 0),
+                formatCurrency(int.tryParse(_priceController.text) ?? 0),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
@@ -347,7 +347,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                     onPressed: () async {
                       final name = _nameController.text.trim();
                       final unit = _unitController.text.trim();
-                      final price = double.tryParse(_priceController.text);
+                      final price = int.tryParse(_priceController.text);
 
                       if (name.isEmpty || unit.isEmpty || price == null || price <= 0) {
                         showToast(context, 'Vui lòng điền đầy đủ thông tin!', isError: true);
@@ -413,20 +413,22 @@ class _GuideDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                border: Border(bottom: BorderSide(color: AppColors.primary, width: 4)),
-              ),
-              child: const Center(
-                child: Text(
-                  'HƯỚNG DẪN SỬ DỤNG',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  border: const Border(bottom: BorderSide(color: AppColors.primary, width: 4)),
+                ),
+                child: const Center(
+                  child: Text(
+                    'HƯỚNG DẪN SỬ DỤNG',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),

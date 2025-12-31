@@ -4,6 +4,7 @@ import '../providers/app_provider.dart';
 import '../models/types.dart';
 import '../constants.dart';
 import '../widgets/common_widgets.dart';
+import 'home_screen.dart';
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key});
@@ -91,8 +92,8 @@ class ReportScreen extends StatelessWidget {
                   ...soldItems.map((item) => _SoldItemCard(
                         product: item!['product'] as Product,
                         log: item['log'] as StockLog,
-                        sold: item['sold'] as double,
-                        revenue: item['revenue'] as double,
+                        sold: (item['sold'] as num).toInt(),
+                        revenue: (item['revenue'] as num).toInt(),
                       )),
 
                   const SizedBox(height: 24),
@@ -113,7 +114,7 @@ class ReportScreen extends StatelessWidget {
                             await provider.startSession();
                             if (context.mounted) {
                               // Navigate to inventory tab
-                              DefaultTabController.of(context).animateTo(2);
+                              HomeScreen.navigatorKey.currentState?.navigateToTab(2);
                               showToast(context, 'Đã bắt đầu ca mới!');
                             }
                           }
@@ -149,7 +150,7 @@ class ReportScreen extends StatelessWidget {
 
 class _SummaryCard extends StatelessWidget {
   final String label;
-  final double amount;
+  final int amount;
   final Color color;
   final Color borderColor;
   final Color? backgroundColor;
@@ -167,16 +168,8 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: borderColor, width: 12),
-          top: BorderSide(color: color.withOpacity(0.2), width: 2),
-          right: BorderSide(color: color.withOpacity(0.2), width: 2),
-          bottom: BorderSide(color: color.withOpacity(0.2), width: 2),
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.shade200,
@@ -185,36 +178,48 @@ class _SummaryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: textColor ?? color,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: backgroundColor ?? Colors.white,
+            border: Border(
+              left: BorderSide(color: borderColor, width: 12),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            formatCurrency(amount),
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: textColor ?? color,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: textColor ?? color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                formatCurrency(amount),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: textColor ?? color,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
 class _DifferenceCard extends StatelessWidget {
-  final double difference;
-  final double recordedTotal;
-  final double theoreticalRevenue;
+  final int difference;
+  final int recordedTotal;
+  final int theoreticalRevenue;
 
   const _DifferenceCard({
     required this.difference,
@@ -311,8 +316,8 @@ class _DifferenceCard extends StatelessWidget {
 class _SoldItemCard extends StatelessWidget {
   final Product product;
   final StockLog log;
-  final double sold;
-  final double revenue;
+  final int sold;
+  final int revenue;
 
   const _SoldItemCard({
     required this.product,
@@ -481,7 +486,7 @@ class _SoldItemCard extends StatelessWidget {
 
 class _StockInfo extends StatelessWidget {
   final String label;
-  final double value;
+  final int value;
   final Color color;
   final bool showPlus;
 
@@ -506,7 +511,7 @@ class _StockInfo extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          showPlus && value > 0 ? '+${value.toInt()}' : value.toInt().toString(),
+          showPlus && value > 0 ? '+${value}' : value.toString(),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w900,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../constants.dart';
 import '../widgets/common_widgets.dart';
+import 'home_screen.dart';
 
 class InventoryScreen extends StatelessWidget {
   const InventoryScreen({super.key});
@@ -36,7 +37,7 @@ class InventoryScreen extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           // Navigate to settings to edit products
-                          DefaultTabController.of(context).animateTo(4);
+                          HomeScreen.navigatorKey.currentState?.navigateToTab(4);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -93,7 +94,7 @@ class InventoryScreen extends StatelessWidget {
                           await provider.closeSession();
                           if (context.mounted) {
                             // Navigate to report tab
-                            DefaultTabController.of(context).animateTo(3);
+                            HomeScreen.navigatorKey.currentState?.navigateToTab(3);
                             showToast(context, 'Đã chốt sổ thành công!');
                           }
                         }
@@ -130,9 +131,9 @@ class InventoryScreen extends StatelessWidget {
 class _InventoryCard extends StatelessWidget {
   final product;
   final log;
-  final Function(double) onUpdateStart;
-  final Function(double) onUpdateAdded;
-  final Function(double) onUpdateEnd;
+  final Function(int) onUpdateStart;
+  final Function(int) onUpdateAdded;
+  final Function(int) onUpdateEnd;
 
   const _InventoryCard({
     required this.product,
@@ -227,11 +228,11 @@ class _InventoryCard extends StatelessWidget {
   }
 }
 
-class _InventoryInput extends StatelessWidget {
+class _InventoryInput extends StatefulWidget {
   final String label;
-  final double value;
+  final int value;
   final Color color;
-  final Function(double) onChanged;
+  final Function(int) onChanged;
 
   const _InventoryInput({
     required this.label,
@@ -241,25 +242,52 @@ class _InventoryInput extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final controller = TextEditingController(
-      text: value == 0 ? '' : value.toString(),
-    );
+  State<_InventoryInput> createState() => _InventoryInputState();
+}
 
+class _InventoryInputState extends State<_InventoryInput> {
+  late TextEditingController _controller;
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.value == 0 ? '' : widget.value.toInt().toString(),
+    );
+  }
+
+  @override
+  void didUpdateWidget(_InventoryInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Chỉ cập nhật text nếu không đang chỉnh sửa và giá trị thay đổi
+    if (!_isEditing && oldWidget.value != widget.value) {
+      _controller.text = widget.value == 0 ? '' : widget.value.toInt().toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         Text(
-          label.toUpperCase(),
+          widget.label.toUpperCase(),
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w900,
-            color: color.withOpacity(0.8),
+            color: widget.color.withOpacity(0.8),
           ),
         ),
         const SizedBox(height: 4),
         TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          controller: _controller,
+          keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 20,
@@ -268,24 +296,40 @@ class _InventoryInput extends StatelessWidget {
           ),
           decoration: InputDecoration(
             filled: true,
-            fillColor: color.withOpacity(0.1),
+            fillColor: widget.color.withOpacity(0.1),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: color, width: 2),
+              borderSide: BorderSide(color: widget.color, width: 2),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: color, width: 2),
+              borderSide: BorderSide(color: widget.color, width: 2),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: color, width: 3),
+              borderSide: BorderSide(color: widget.color, width: 3),
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            hintText: '0',
+            hintStyle: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Colors.grey.shade400,
+            ),
           ),
+          onTap: () {
+            _isEditing = true;
+          },
           onChanged: (text) {
-            final parsedValue = double.tryParse(text) ?? 0;
-            onChanged(parsedValue);
+            final parsedValue = int.tryParse(text) ?? 0;
+            widget.onChanged(parsedValue);
+          },
+          onEditingComplete: () {
+            _isEditing = false;
+            FocusScope.of(context).unfocus();
+          },
+          onSubmitted: (_) {
+            _isEditing = false;
           },
         ),
       ],

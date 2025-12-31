@@ -10,6 +10,9 @@ import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+  
+  // Static key để access từ các screen con
+  static final GlobalKey<_HomeScreenState> navigatorKey = GlobalKey<_HomeScreenState>();
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -17,6 +20,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  
+  /// Public method để chuyển tab từ bên ngoài
+  void navigateToTab(int index) {
+    if (mounted) {
+      setState(() {
+        _tabController.animateTo(index);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -64,34 +76,36 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ],
             ),
             bottomNavigationBar: SafeArea(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                  border: const Border(top: BorderSide(color: AppColors.primary, width: 4)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 30,
-                      offset: const Offset(0, -10),
-                    ),
-                  ],
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicatorColor: Colors.transparent,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.grey.shade500,
-                  tabs: [
-                    _NavTab(icon: '💰', label: 'BÁN', isSelected: _tabController.index == 0),
-                    _NavTab(icon: '📖', label: 'TIỀN', isSelected: _tabController.index == 1),
-                    _NavTab(icon: '📦', label: 'KHO', isSelected: _tabController.index == 2),
-                    _NavTab(icon: '📊', label: 'SỔ', isSelected: _tabController.index == 3),
-                    _NavTab(icon: '⚙️', label: 'MÓN', isSelected: _tabController.index == 4),
-                  ],
-                  onTap: (index) {
-                    setState(() {});
-                  },
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    border: const Border(top: BorderSide(color: AppColors.primary, width: 4)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 30,
+                        offset: const Offset(0, -10),
+                      ),
+                    ],
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorColor: Colors.transparent,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.grey.shade500,
+                    tabs: [
+                      _NavTab(icon: '💰', label: 'BÁN', isSelected: _tabController.index == 0),
+                      _NavTab(icon: '📖', label: 'TIỀN', isSelected: _tabController.index == 1),
+                      _NavTab(icon: '📦', label: 'KHO', isSelected: _tabController.index == 2),
+                      _NavTab(icon: '📊', label: 'SỔ', isSelected: _tabController.index == 3),
+                      _NavTab(icon: '⚙️', label: 'MÓN', isSelected: _tabController.index == 4),
+                    ],
+                    onTap: (index) {
+                      setState(() {});
+                    },
+                  ),
                 ),
               ),
             ),
@@ -118,24 +132,24 @@ class _NavTab extends StatelessWidget {
     return Tab(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
         ),
-        transform: isSelected ? (Matrix4.identity()..translate(0.0, -8.0)) : Matrix4.identity(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               icon,
-              style: const TextStyle(fontSize: 24),
+              style: const TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 1),
             Text(
               label,
               style: TextStyle(
-                fontSize: 9,
+                fontSize: 8,
                 fontWeight: FontWeight.w900,
                 color: isSelected ? Colors.white : Colors.grey.shade500,
               ),
@@ -268,20 +282,22 @@ class _GuideDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                border: Border(bottom: BorderSide(color: AppColors.primary, width: 4)),
-              ),
-              child: const Center(
-                child: Text(
-                  'HƯỚNG DẪN SỬ DỤNG',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  border: const Border(bottom: BorderSide(color: AppColors.primary, width: 4)),
+                ),
+                child: const Center(
+                  child: Text(
+                    'HƯỚNG DẪN SỬ DỤNG',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),

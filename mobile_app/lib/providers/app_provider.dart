@@ -118,9 +118,9 @@ class AppProvider with ChangeNotifier {
 
   /// Cập nhật stock log
   Future<void> updateStockLog(String productId, {
-    double? startQty,
-    double? addedQty,
-    double? endQty,
+    int? startQty,
+    int? addedQty,
+    int? endQty,
   }) async {
     if (_session == null) return;
 
@@ -141,7 +141,7 @@ class AppProvider with ChangeNotifier {
 
   /// Thêm giao dịch bán hàng
   Future<void> addSale({
-    required double amount,
+    required int amount,
     required PaymentMethod method,
     String? note,
   }) async {
@@ -156,10 +156,10 @@ class AppProvider with ChangeNotifier {
     );
 
     final newTransactions = [transaction, ..._session!.transactions];
-    final newCash = method == PaymentMethod.cash
+    final int newCash = method == PaymentMethod.cash
         ? _session!.actualCash + amount
         : _session!.actualCash;
-    final newTransfer = method == PaymentMethod.transfer
+    final int newTransfer = method == PaymentMethod.transfer
         ? _session!.actualTransfer + amount
         : _session!.actualTransfer;
 
@@ -182,10 +182,10 @@ class AppProvider with ChangeNotifier {
     );
 
     final newTransactions = _session!.transactions.where((t) => t.id != transactionId).toList();
-    final newCash = transaction.method == PaymentMethod.cash
+    final int newCash = transaction.method == PaymentMethod.cash
         ? _session!.actualCash - transaction.amount
         : _session!.actualCash;
-    final newTransfer = transaction.method == PaymentMethod.transfer
+    final int newTransfer = transaction.method == PaymentMethod.transfer
         ? _session!.actualTransfer - transaction.amount
         : _session!.actualTransfer;
 
@@ -226,8 +226,8 @@ class AppProvider with ChangeNotifier {
     }).toList();
 
     // Tính lại tổng tiền
-    double newCash = _session!.actualCash;
-    double newTransfer = _session!.actualTransfer;
+    int newCash = _session!.actualCash;
+    int newTransfer = _session!.actualTransfer;
 
     // Trừ tiền cũ
     if (oldTransaction.method == PaymentMethod.cash) {
@@ -290,10 +290,10 @@ class AppProvider with ChangeNotifier {
   }
 
   /// Tính doanh thu lý thuyết
-  double calculateTheoreticalRevenue() {
+  int calculateTheoreticalRevenue() {
     if (_session == null) return 0;
 
-    double total = 0;
+    int total = 0;
     for (final product in _products) {
       final log = _session!.stockLogs[product.id];
       if (log != null) {
@@ -307,7 +307,7 @@ class AppProvider with ChangeNotifier {
   }
 
   /// Tính chênh lệch
-  double calculateDifference() {
+  int calculateDifference() {
     if (_session == null) return 0;
     final recorded = _session!.actualCash + _session!.actualTransfer;
     final theoretical = calculateTheoreticalRevenue();

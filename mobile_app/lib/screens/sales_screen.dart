@@ -63,7 +63,7 @@ class _SalesScreenState extends State<SalesScreen> {
       return;
     }
 
-    final amount = double.tryParse(_amount);
+    final amount = int.tryParse(_amount);
     if (amount == null || amount <= 0) {
       showToast(context, 'Số tiền không hợp lệ!', isError: true);
       return;

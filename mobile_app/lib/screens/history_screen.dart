@@ -148,7 +148,7 @@ class HistoryScreen extends StatelessWidget {
 
 class _SummaryCard extends StatelessWidget {
   final String label;
-  final double amount;
+  final int amount;
   final Color color;
 
   const _SummaryCard({
@@ -430,7 +430,7 @@ class _EditTransactionDialogState extends State<_EditTransactionDialog> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      final amount = double.tryParse(_amountController.text);
+                      final amount = int.tryParse(_amountController.text);
                       if (amount == null || amount <= 0) {
                         showToast(context, 'Số tiền không hợp lệ!', isError: true);
                         return;

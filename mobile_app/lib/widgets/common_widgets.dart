@@ -112,7 +112,7 @@ class KeypadButton extends StatelessWidget {
 }
 
 /// Format tiền tệ VND
-String formatCurrency(double amount) {
+String formatCurrency(int amount) {
   final formatter = NumberFormat.currency(
     locale: 'vi_VN',
     symbol: '₫',

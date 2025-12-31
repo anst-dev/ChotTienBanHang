@@ -22,7 +22,7 @@ class Product {
   final String id;
   final String name;
   final String unit;
-  final double price;
+  final int price;
 
   Product({
     required this.id,
@@ -42,14 +42,14 @@ class Product {
         id: json['id'] as String,
         name: json['name'] as String,
         unit: json['unit'] as String,
-        price: (json['price'] as num).toDouble(),
+        price: (json['price'] as num).toInt(),
       );
 
   Product copyWith({
     String? id,
     String? name,
     String? unit,
-    double? price,
+    int? price,
   }) =>
       Product(
         id: id ?? this.id,
@@ -63,7 +63,7 @@ class Product {
 class Transaction {
   final String id;
   final int timestamp;
-  final double amount;
+  final int amount;
   final PaymentMethod method;
   final String? note;
 
@@ -86,7 +86,7 @@ class Transaction {
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
         id: json['id'] as String,
         timestamp: json['timestamp'] as int,
-        amount: (json['amount'] as num).toDouble(),
+        amount: (json['amount'] as num).toInt(),
         method: PaymentMethod.fromString(json['method'] as String),
         note: json['note'] as String?,
       );
@@ -94,7 +94,7 @@ class Transaction {
   Transaction copyWith({
     String? id,
     int? timestamp,
-    double? amount,
+    int? amount,
     PaymentMethod? method,
     String? note,
   }) =>
@@ -110,9 +110,9 @@ class Transaction {
 /// Model cho nhật ký kho
 class StockLog {
   final String productId;
-  final double startQty;
-  final double addedQty;
-  final double endQty;
+  final int startQty;
+  final int addedQty;
+  final int endQty;
 
   StockLog({
     required this.productId,
@@ -130,16 +130,16 @@ class StockLog {
 
   factory StockLog.fromJson(Map<String, dynamic> json) => StockLog(
         productId: json['productId'] as String,
-        startQty: (json['startQty'] as num?)?.toDouble() ?? 0,
-        addedQty: (json['addedQty'] as num?)?.toDouble() ?? 0,
-        endQty: (json['endQty'] as num?)?.toDouble() ?? 0,
+        startQty: (json['startQty'] as num?)?.toInt() ?? 0,
+        addedQty: (json['addedQty'] as num?)?.toInt() ?? 0,
+        endQty: (json['endQty'] as num?)?.toInt() ?? 0,
       );
 
   StockLog copyWith({
     String? productId,
-    double? startQty,
-    double? addedQty,
-    double? endQty,
+    int? startQty,
+    int? addedQty,
+    int? endQty,
   }) =>
       StockLog(
         productId: productId ?? this.productId,
@@ -156,8 +156,8 @@ class DailySession {
   final bool isActive;
   final Map<String, StockLog> stockLogs;
   final List<Transaction> transactions;
-  final double actualCash;
-  final double actualTransfer;
+  final int actualCash;
+  final int actualTransfer;
 
   DailySession({
     required this.id,
@@ -196,8 +196,8 @@ class DailySession {
       isActive: json['isActive'] as bool,
       stockLogs: stockLogs,
       transactions: transactions,
-      actualCash: (json['actualCash'] as num?)?.toDouble() ?? 0,
-      actualTransfer: (json['actualTransfer'] as num?)?.toDouble() ?? 0,
+      actualCash: (json['actualCash'] as num?)?.toInt() ?? 0,
+      actualTransfer: (json['actualTransfer'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -207,8 +207,8 @@ class DailySession {
     bool? isActive,
     Map<String, StockLog>? stockLogs,
     List<Transaction>? transactions,
-    double? actualCash,
-    double? actualTransfer,
+    int? actualCash,
+    int? actualTransfer,
   }) =>
       DailySession(
         id: id ?? this.id,
