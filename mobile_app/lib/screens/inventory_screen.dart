@@ -129,8 +129,8 @@ class InventoryScreen extends StatelessWidget {
 }
 
 class _InventoryCard extends StatelessWidget {
-  final product;
-  final log;
+  final dynamic product;
+  final dynamic log;
   final Function(int) onUpdateStart;
   final Function(int) onUpdateAdded;
   final Function(int) onUpdateEnd;
@@ -281,7 +281,7 @@ class _InventoryInputState extends State<_InventoryInput> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w900,
-            color: widget.color.withOpacity(0.8),
+            color: widget.color.withValues(alpha: 0.8),
           ),
         ),
         const SizedBox(height: 4),
@@ -296,7 +296,7 @@ class _InventoryInputState extends State<_InventoryInput> {
           ),
           decoration: InputDecoration(
             filled: true,
-            fillColor: widget.color.withOpacity(0.1),
+            fillColor: widget.color.withValues(alpha: 0.1),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: widget.color, width: 2),

@@ -45,7 +45,6 @@ class MyApp extends StatelessWidget {
             primary: AppColors.primary,
             secondary: AppColors.cash,
             surface: AppColors.surface,
-            background: AppColors.background,
           ),
           textTheme: GoogleFonts.interTextTheme(
             Theme.of(context).textTheme,

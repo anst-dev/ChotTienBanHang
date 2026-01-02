@@ -81,6 +81,7 @@ class _SalesScreenState extends State<SalesScreen> {
       _noteController.clear();
     });
 
+    if (!mounted) return;
     showToast(
       context,
       method == PaymentMethod.cash ? 'Đã lưu tiền mặt!' : 'Đã lưu chuyển khoản!',
@@ -212,7 +213,7 @@ class _SalesScreenState extends State<SalesScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.cash,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: AppColors.cash.withOpacity(0.5),
+                        disabledBackgroundColor: AppColors.cash.withValues(alpha: 0.5),
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -236,7 +237,7 @@ class _SalesScreenState extends State<SalesScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+                        disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),

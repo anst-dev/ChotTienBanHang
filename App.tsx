@@ -5,18 +5,15 @@ import {
   DailySession, 
   PaymentMethod, 
   Transaction, 
-  StockLog,
-  BankInfo 
+  StockLog
 } from './types';
 import { 
   INITIAL_PRODUCTS, 
-  DEFAULT_BANK_INFO, 
   COLORS 
 } from './constants';
 import { 
   formatCurrency, 
   formatNumber,
-  getVietQRUrl, 
   getCurrentDateKey 
 } from './utils';
 
@@ -40,13 +37,11 @@ const App: React.FC = () => {
     try { return saved ? JSON.parse(saved) : []; } catch (e) { return []; }
   });
 
-  const [bankInfo] = useState<BankInfo>(DEFAULT_BANK_INFO);
   const [activeTab, setActiveTab] = useState<'sales' | 'inventory' | 'report' | 'history' | 'settings'>('sales');
   
   // State cho màn hình Bán
   const [saleAmount, setSaleAmount] = useState<string>('');
   const [saleNote, setSaleNote] = useState<string>('');
-  const [showQR, setShowQR] = useState(false);
   
   // State cho việc sửa đơn hàng
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -58,8 +53,9 @@ const App: React.FC = () => {
 
   const [newProduct, setNewProduct] = useState<Partial<Product>>({ name: '', unit: '', price: 0 });
   
-  // State hướng dẫn
-  const [showGuide, setShowGuide] = useState(false);
+  // State cho PWA Install
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => { localStorage.setItem('products', JSON.stringify(products)); }, [products]);
   useEffect(() => { localStorage.setItem('current_session', JSON.stringify(session)); }, [session]);
@@ -81,6 +77,41 @@ const App: React.FC = () => {
     setSession(newSession);
     setActiveTab('inventory');
   }, [products]);
+
+  // Auto-start session nếu chưa có (chỉ chạy 1 lần khi mount)
+  useEffect(() => {
+    if (!session) {
+      startSession();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setShowInstallBanner(false);
+    }
+    
+    setDeferredPrompt(null);
+  };
 
   const updateActualMoney = useCallback((method: PaymentMethod, value: number) => {
     setSession(prev => {
@@ -115,17 +146,14 @@ const App: React.FC = () => {
       };
     });
 
-    if (method === PaymentMethod.TRANSFER) {
-      setShowQR(true);
-    } else {
-      setSaleAmount('');
-      setSaleNote('');
-      const toast = document.createElement('div');
-      toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-700 text-white px-6 py-3 rounded-full font-black shadow-2xl z-[100]';
-      toast.innerText = 'Đã lưu tiền mặt!';
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 1500);
-    }
+    // Hiển thị thông báo và reset form
+    setSaleAmount('');
+    setSaleNote('');
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-700 text-white px-6 py-3 rounded-full font-black shadow-2xl z-[100]';
+    toast.innerText = method === PaymentMethod.CASH ? 'Đã lưu tiền mặt!' : 'Đã lưu chuyển khoản!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 1500);
   }, [session, saleAmount, saleNote]);
 
   const deleteTransaction = (id: string) => {
@@ -181,15 +209,10 @@ const App: React.FC = () => {
     }
   };
 
-  const handleKeypad = (val: string) => {
-    if (val === 'C' || val === 'NHẬP LẠI') setSaleAmount('');
-    else if (val === '000') setSaleAmount(prev => (prev === '' || prev === '0' ? '' : prev + '000'));
-    else setSaleAmount(prev => (prev === '0' ? val : prev + val));
-  };
-
   const renderSales = () => (
-    <div className="flex flex-col space-y-2">
-      <div className="bg-white p-3 rounded-xl shadow-md border-[4px] border-blue-800 mb-1">
+    <div className="flex flex-col space-y-3">
+      {/* Hiển thị số tiền */}
+      <div className="bg-white p-4 rounded-xl shadow-md border-[4px] border-blue-800">
         <div className="flex items-center justify-between">
            <span className="text-black text-xl font-black">₫</span>
            <div className="text-3xl font-black text-right text-blue-900 break-all tracking-tight">
@@ -198,6 +221,84 @@ const App: React.FC = () => {
         </div>
       </div>
 
+      {/* Input nhập tiền trực tiếp */}
+      <div className="px-1">
+        <input 
+          type="number"
+          inputMode="numeric"
+          placeholder="Nhập số tiền..."
+          className="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-2xl font-black text-black focus:border-blue-500 outline-none text-center"
+          value={saleAmount}
+          onChange={(e) => setSaleAmount(e.target.value)}
+        />
+      </div>
+
+      {/* Mốc tiền gợi ý */}
+      <div>
+        <p className="text-xs font-black text-gray-500 uppercase mb-2 px-1">Chọn nhanh</p>
+        <div className="grid grid-cols-4 gap-2">
+          {[5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000].map(amount => (
+            <button
+              key={amount}
+              onClick={() => setSaleAmount(amount.toString())}
+              className="py-3 bg-emerald-100 text-emerald-900 font-black rounded-xl shadow-sm border-2 border-emerald-300 text-sm active:bg-emerald-200"
+            >
+              {amount >= 1000000 ? `${amount/1000000}tr` : `${amount/1000}k`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Nút cộng tiền */}
+      <div>
+        <p className="text-xs font-black text-gray-500 uppercase mb-2 px-1">Cộng thêm</p>
+        <div className="grid grid-cols-4 gap-2">
+          {[10000, 20000, 50000, 100000].map(amount => (
+            <button
+              key={amount}
+              onClick={() => {
+                const current = parseFloat(saleAmount) || 0;
+                setSaleAmount((current + amount).toString());
+              }}
+              className="py-3 bg-blue-100 text-blue-900 font-black rounded-xl shadow-sm border-2 border-blue-300 text-sm active:bg-blue-200"
+            >
+              +{amount/1000}k
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Nút giảm tiền */}
+      <div>
+        <p className="text-xs font-black text-gray-500 uppercase mb-2 px-1">Giảm bớt</p>
+        <div className="grid grid-cols-4 gap-2">
+          {[10000, 20000, 50000, 100000].map(amount => (
+            <button
+              key={amount}
+              onClick={() => {
+                const current = parseFloat(saleAmount) || 0;
+                const newAmount = Math.max(0, current - amount);
+                setSaleAmount(newAmount.toString());
+              }}
+              className="py-3 bg-orange-100 text-orange-900 font-black rounded-xl shadow-sm border-2 border-orange-300 text-sm active:bg-orange-200"
+            >
+              -{amount/1000}k
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Nút NHẬP LẠI */}
+      <div className="px-1">
+        <button
+          onClick={() => setSaleAmount('')}
+          className="w-full py-3 bg-red-600 text-white font-black rounded-xl shadow-lg border-2 border-red-800 text-sm uppercase active:bg-red-700"
+        >
+          🔄 NHẬP LẠI
+        </button>
+      </div>
+
+      {/* Ghi chú */}
       <div className="px-1">
         <input 
           type="text"
@@ -208,41 +309,12 @@ const App: React.FC = () => {
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-2">
-        {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'NHẬP LẠI', '0', '000'].map(key => (
-          <button
-            key={key}
-            onClick={() => handleKeypad(key)}
-            className={`py-5 font-black rounded-xl shadow-sm border-2 ${
-              key === 'NHẬP LẠI' ? 'bg-red-700 text-white border-red-900 text-sm' : 
-              key === '000' ? 'bg-blue-100 text-black border-blue-400 text-2xl' : 'bg-white text-black border-gray-300 text-2xl'
-            }`}
-          >
-            {key}
-          </button>
-        ))}
-      </div>
-
+      {/* Nút thanh toán */}
       <div className="grid grid-cols-2 gap-3">
         <button onClick={() => addSale(PaymentMethod.CASH)} disabled={!saleAmount} className="bg-emerald-700 text-white py-5 rounded-2xl text-lg font-black shadow-lg border-b-4 border-emerald-950 active:translate-y-1 disabled:opacity-50 leading-tight">TIỀN MẶT</button>
         <button onClick={() => addSale(PaymentMethod.TRANSFER)} disabled={!saleAmount} className="bg-blue-800 text-white py-5 rounded-2xl text-lg font-black shadow-lg border-b-4 border-blue-950 active:translate-y-1 disabled:opacity-50 leading-tight">CHUYỂN KHOẢN</button>
       </div>
 
-      {showQR && (
-        <div className="fixed inset-0 bg-black/90 flex flex-col items-center justify-center z-50 p-6">
-          <div className="bg-white rounded-[40px] p-6 max-w-sm w-full text-center shadow-2xl">
-            <h3 className="text-2xl font-black mb-4 text-black">Mời khách quét mã</h3>
-            <div className="bg-white p-2 rounded-xl border-[6px] border-blue-800 mb-4">
-              <img src={getVietQRUrl(bankInfo, parseFloat(saleAmount), saleNote)} alt="VietQR" className="w-full h-auto" />
-            </div>
-            <p className="text-3xl font-black text-blue-950 mb-6">{formatCurrency(parseFloat(saleAmount))}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setShowQR(false)} className="py-5 bg-gray-200 text-black font-black text-lg rounded-2xl border-b-4 border-gray-400">ĐÓNG</button>
-              <button onClick={() => { setShowQR(false); setSaleAmount(''); setSaleNote(''); }} className="py-5 bg-emerald-700 text-white font-black text-lg rounded-2xl border-b-4 border-emerald-900 leading-tight tracking-tighter">MẸ ĐÃ NHẬN TIỀN</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 
@@ -257,7 +329,7 @@ const App: React.FC = () => {
       
       {session && (
         <div className="bg-blue-50 p-5 rounded-3xl border-2 border-blue-200 mb-6 shadow-md">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
                <p className="text-[10px] font-black text-emerald-700 uppercase">Tiền mặt</p>
                <p className="text-lg font-black text-emerald-800">{formatCurrency(session.actualCash)}</p>
@@ -266,6 +338,12 @@ const App: React.FC = () => {
                <p className="text-[10px] font-black text-blue-700 uppercase">Chuyển khoản</p>
                <p className="text-lg font-black text-blue-900">{formatCurrency(session.actualTransfer)}</p>
             </div>
+          </div>
+          
+          {/* Tổng tiền */}
+          <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-4 rounded-xl shadow-lg border-2 border-purple-800">
+            <p className="text-[10px] font-black text-purple-200 uppercase text-center">Tổng tiền</p>
+            <p className="text-2xl font-black text-white text-center">{formatCurrency(session.actualCash + session.actualTransfer)}</p>
           </div>
 
           <div className="mt-6 space-y-3">
@@ -412,10 +490,15 @@ const App: React.FC = () => {
     let totalRev = 0;
     const report = products.map(p => {
       const log = session.stockLogs[p.id] || { startQty: 0, addedQty: 0, endQty: 0 };
-      const sold = log.startQty + log.addedQty - log.endQty;
-      const revenue = Math.max(0, sold) * p.price;
+      // Đảm bảo các giá trị là số hợp lệ
+      const startQty = parseFloat(String(log.startQty)) || 0;
+      const addedQty = parseFloat(String(log.addedQty)) || 0;
+      const endQty = parseFloat(String(log.endQty)) || 0;
+      
+      const sold = startQty + addedQty - endQty;
+      const revenue = Math.max(0, sold) * (p.price || 0);
       totalRev += revenue;
-      return { ...p, sold: Math.max(0, sold), revenue, log };
+      return { ...p, sold: Math.max(0, sold), revenue, log: { startQty, addedQty, endQty } };
     });
     const recordedTotal = session.actualCash + session.actualTransfer;
     const diff = recordedTotal - totalRev;
@@ -432,6 +515,13 @@ const App: React.FC = () => {
             <p className="text-blue-900 font-black uppercase text-xs">Thực thu Chuyển khoản</p>
             <p className="text-3xl font-black text-blue-900">{formatCurrency(session.actualTransfer)}</p>
           </div>
+          
+          {/* Tổng tiền thực thu */}
+          <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-5 rounded-2xl shadow-lg border-l-[12px] border-purple-900 border-2 border-purple-800">
+            <p className="text-purple-200 font-black uppercase text-xs mb-1">Tổng tiền thực thu</p>
+            <p className="text-3xl font-black text-white">{formatCurrency(session.actualCash + session.actualTransfer)}</p>
+          </div>
+          
           <div className="bg-black p-5 rounded-2xl shadow-md border-l-[12px] border-gray-500">
             <p className="text-gray-400 font-black uppercase text-xs mb-1">Doanh thu lý thuyết</p>
             <p className="text-2xl font-black text-white">{formatCurrency(totalRev)}</p>
@@ -496,10 +586,7 @@ const App: React.FC = () => {
     <div className="space-y-4 pb-24">
       <div className="flex justify-between items-center mb-2">
         <SectionTitle title="Danh mục hàng" />
-        <div className="space-x-2">
-          <button onClick={() => setShowGuide(true)} className="bg-blue-100 text-blue-900 px-3 py-3 rounded-xl font-black text-sm border-b-4 border-blue-200">HƯỚNG DẪN</button>
-          <button onClick={() => setShowAddProductModal(true)} className="bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-sm shadow-lg border-b-4 border-emerald-900">+ THÊM MÓN</button>
-        </div>
+        <button onClick={() => setShowAddProductModal(true)} className="bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-sm shadow-lg border-b-4 border-emerald-900">+ THÊM MÓN</button>
       </div>
       <div className="space-y-3">
         {products.map(p => (
@@ -521,25 +608,33 @@ const App: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-white pb-24 border-x-4 border-gray-200 shadow-xl font-sans relative">
-      <main className="p-4">
-        {!session && activeTab !== 'history' && activeTab !== 'settings' ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center px-4">
-            <div className="w-32 h-32 bg-blue-900 rounded-[48px] flex items-center justify-center mb-10 shadow-2xl border-[8px] border-blue-700 transform rotate-3"><span className="text-6xl">🏪</span></div>
-            <h2 className="text-4xl font-black text-black mb-4">Chào mẹ yêu!</h2>
-            <div className="w-full space-y-4">
-              <button onClick={startSession} className="w-full bg-emerald-600 text-white py-6 rounded-3xl text-2xl font-black border-b-8 border-emerald-900 shadow-xl active:translate-y-2">BẮT ĐẦU BÁN HÀNG</button>
-              <button onClick={() => setShowGuide(true)} className="w-full bg-white text-blue-900 py-4 rounded-3xl text-lg font-black border-b-4 border-gray-200 shadow-lg active:translate-y-1">HƯỚNG DẪN SỬ DỤNG</button>
+      {/* Banner cài đặt PWA */}
+      {showInstallBanner && (
+        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 shadow-2xl z-50 max-w-md mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-3xl">📱</span>
+              <div>
+                <p className="font-black text-sm">CÀI ĐẶT ỨNG DỤNG</p>
+                <p className="text-xs opacity-90">Để sử dụng nhanh hơn, mẹ cài về máy nhé!</p>
+              </div>
+            </div>
+            <div className="flex space-x-2">
+              <button onClick={() => setShowInstallBanner(false)} className="text-white/70 px-3 py-2 text-xs font-black">BỎ QUA</button>
+              <button onClick={handleInstallClick} className="bg-white text-blue-900 px-4 py-2 rounded-lg text-xs font-black shadow-lg">CÀI ĐẶT</button>
             </div>
           </div>
-        ) : (
-          <div className="animate-in fade-in duration-300">
-            {activeTab === 'sales' && renderSales()}
-            {activeTab === 'inventory' && renderInventory()}
-            {activeTab === 'report' && renderReport()}
-            {activeTab === 'history' && renderHistory()}
-            {activeTab === 'settings' && renderSettings()}
-          </div>
-        )}
+        </div>
+      )}
+
+      <main className="p-4">
+        <div className="animate-in fade-in duration-300">
+          {activeTab === 'sales' && renderSales()}
+          {activeTab === 'inventory' && renderInventory()}
+          {activeTab === 'report' && renderReport()}
+          {activeTab === 'history' && renderHistory()}
+          {activeTab === 'settings' && renderSettings()}
+        </div>
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-black border-t-[4px] border-blue-800 px-2 py-3 flex justify-around items-center z-30 max-w-md mx-auto rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.3)]">
@@ -623,46 +718,18 @@ const App: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <button onClick={() => setProductToDelete(null)} className="py-4 bg-gray-200 font-black rounded-xl uppercase">Không</button>
               <button onClick={() => {
+                // Xóa sản phẩm khỏi danh sách products
                 setProducts(products.filter(p => p.id !== productToDelete.id));
+                
+                // Đồng bộ: Xóa stockLog của sản phẩm này khỏi session (nếu có)
+                setSession(prev => {
+                  if (!prev) return null;
+                  const { [productToDelete.id]: removed, ...remainingStockLogs } = prev.stockLogs;
+                  return { ...prev, stockLogs: remainingStockLogs };
+                });
+                
                 setProductToDelete(null);
               }} className="py-4 bg-red-700 text-white font-black rounded-xl uppercase">Xóa Luôn</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Hướng dẫn sử dụng */}
-      {showGuide && (
-        <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-[40px] w-full max-w-sm h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div className="p-6 border-b-4 border-blue-800 bg-blue-50">
-              <h3 className="text-2xl font-black text-blue-900 text-center uppercase">Hướng dẫn sử dụng</h3>
-            </div>
-              <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-100">
-                <div className="flex items-center space-x-3 mb-2">
-                  <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-black">1</span>
-                  <h4 className="font-black text-emerald-900 text-lg">NHẬN CA</h4>
-                </div>
-                <p className="text-gray-700 font-medium">Bấm bút <span className="font-black text-white bg-emerald-600 px-2 py-0.5 rounded">MỞ CA</span>. Vào mục <span className="font-black text-black">📦 KHO</span>, điếm xem trong tủ còn bao nhiêu hàng thì nhập vào cột <span className="font-black text-black">ĐẦU CA</span>.</p>
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-2xl border-2 border-blue-100">
-                <div className="flex items-center space-x-3 mb-2">
-                  <span className="bg-blue-800 text-white w-8 h-8 rounded-full flex items-center justify-center font-black">2</span>
-                  <h4 className="font-black text-blue-900 text-lg">BÁN HÀNG</h4>
-                </div>
-                <p className="text-gray-700 font-medium">Khách mua bao nhiêu tiền thì bấm số vào máy. Chọn <span className="font-black text-emerald-700">TIỀN MẶT</span> hoặc <span className="font-black text-blue-800">CHUYỂN KHOẢN</span>.</p>
-              </div>
-
-              <div className="bg-red-50 p-4 rounded-2xl border-2 border-red-100">
-                <div className="flex items-center space-x-3 mb-2">
-                  <span className="bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black">3</span>
-                  <h4 className="font-black text-red-900 text-lg">CUỐI CA KIỂM TRA</h4>
-                </div>
-                <p className="text-gray-700 font-medium">Đếm lại hàng còn lại trong tủ rồi nhập vào cột <span className="font-black text-red-700">CUỐI CA</span> để xem hôm nay bán được bao nhiêu.</p>
-              </div>
-            <div className="p-4 border-t-4 border-gray-100 bg-gray-50">
-              <button onClick={() => setShowGuide(false)} className="w-full py-4 bg-gray-800 text-white font-black text-xl rounded-2xl shadow-lg border-b-8 border-black active:translate-y-1">ĐÓNG HƯỚNG DẪN</button>
             </div>
           </div>
         </div>

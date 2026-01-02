@@ -266,7 +266,7 @@ class _DifferenceCard extends StatelessWidget {
         border: Border.all(color: borderColor, width: 3),
         boxShadow: [
           BoxShadow(
-            color: borderColor.withOpacity(0.3),
+            color: borderColor.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -279,7 +279,7 @@ class _DifferenceCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w900,
-              color: textColor.withOpacity(0.7),
+              color: textColor.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 8),
@@ -511,7 +511,7 @@ class _StockInfo extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          showPlus && value > 0 ? '+${value}' : value.toString(),
+          showPlus && value > 0 ? '+$value' : value.toString(),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w900,

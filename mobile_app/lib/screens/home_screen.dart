@@ -12,13 +12,13 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   
   // Static key để access từ các screen con
-  static final GlobalKey<_HomeScreenState> navigatorKey = GlobalKey<_HomeScreenState>();
+  static final GlobalKey<HomeScreenState> navigatorKey = GlobalKey<HomeScreenState>();
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
   /// Public method để chuyển tab từ bên ngoài
@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     border: const Border(top: BorderSide(color: AppColors.primary, width: 4)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 30,
                         offset: const Offset(0, -10),
                       ),
@@ -187,7 +187,7 @@ class _WelcomeScreen extends StatelessWidget {
                     border: Border.all(color: AppColors.primaryDark, width: 8),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
+                        color: AppColors.primary.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -223,7 +223,7 @@ class _WelcomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                     ),
                     elevation: 8,
-                    shadowColor: AppColors.cash.withOpacity(0.5),
+                    shadowColor: AppColors.cash.withValues(alpha: 0.5),
                   ),
                   child: const Text(
                     'BẮT ĐẦU BÁN HÀNG',
@@ -378,9 +378,9 @@ class _GuideStep extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 2),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
